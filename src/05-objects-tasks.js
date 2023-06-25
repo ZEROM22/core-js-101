@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /* ************************************************************************************************
  *                                                                                                *
  * Please read the following tutorial before implementing tasks:                                   *
@@ -20,8 +21,12 @@
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  return {
+    width,
+    height,
+    getArea: () => height * width,
+  };
 }
 
 
@@ -35,8 +40,8 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
 
 
@@ -51,8 +56,10 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  const obj = JSON.parse(json);
+  Object.setPrototypeOf(obj, proto);
+  return obj;
 }
 
 
@@ -110,33 +117,94 @@ function fromJSON(/* proto, json */) {
  *  For more examples see unit tests.
  */
 
+
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  selector: '',
+
+  element(value) {
+    if (this._element) throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    if (this._id
+      || this._class
+      || this._attr
+      || this._pseudoClass
+      || this._pseudoElement
+    ) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element" if selector parts arranged in an invalid order.');
+
+    const newBuilder = Object.create(cssSelectorBuilder);
+    newBuilder.selector = this.selector + value;
+    newBuilder._element = value;
+    return newBuilder;
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    if (this._id) throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    if (this._class
+      || this._attr
+      || this._pseudoClass
+      || this._pseudoElement
+    ) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element" if selector parts arranged in an invalid order.');
+
+    const newBuilder = Object.create(cssSelectorBuilder);
+    newBuilder.selector = `${this.selector}#${value}`;
+    newBuilder._id = value;
+    return newBuilder;
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    if (this._attr
+      || this._pseudoClass
+      || this._pseudoElement
+    ) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element" if selector parts arranged in an invalid order.');
+
+    const newBuilder = Object.create(cssSelectorBuilder);
+    newBuilder.selector = `${this.selector}.${value}`;
+    this._class = value;
+    return newBuilder;
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    if (this._pseudoClass
+      || this._pseudoElement
+    ) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element" if selector parts arranged in an invalid order.');
+
+    const newBuilder = Object.create(cssSelectorBuilder);
+    newBuilder.selector = `${this.selector}[${value}]`;
+    this._attr = value;
+    return newBuilder;
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    if (this._pseudoElement) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element" if selector parts arranged in an invalid order.');
+
+    const newBuilder = Object.create(cssSelectorBuilder);
+    newBuilder.selector = `${this.selector}:${value}`;
+    this._pseudoClass = value;
+    return newBuilder;
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    const newBuilder = Object.create(cssSelectorBuilder);
+    newBuilder.selector = `${this.selector}::${value}`;
+    if (this._pseudoElement) throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    newBuilder._pseudoElement = value;
+    this._pseudoElement = value;
+    return newBuilder;
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    const newBuilder = Object.create(cssSelectorBuilder);
+    newBuilder.selector = `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+    return newBuilder;
+  },
+
+  stringify() {
+    this._element = null;
+    this._id = null;
+    this._class = null;
+    this._attr = null;
+    this._pseudoClass = null;
+    this._pseudoElement = null;
+    return this.selector;
   },
 };
 
